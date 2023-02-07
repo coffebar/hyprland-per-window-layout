@@ -6,7 +6,7 @@ It's fork of [hyprland-per-window-layout](https://github.com/MahouShoujoMivutild
 
 ## How to use it
 
-Install **hyprland-per-window-layout** from AUR
+Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
 
 and
 
