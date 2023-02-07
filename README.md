@@ -1,6 +1,6 @@
 # Hyprland per window layout
 
-The script maintains associative array `windows` that maps windows' addresses to selected layouts.
+The script maintains associative array `windows` that maps windows' addresses to selected keyboard layouts.
 
 It's fork of [hyprland-per-window-layout](https://github.com/MahouShoujoMivutilde/hyprland-per-window-layout), with zero configuration and multi-keyboard support.
 
