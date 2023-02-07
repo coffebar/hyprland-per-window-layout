@@ -1,4 +1,4 @@
-# Hyprland per window xkb layout
+# Hyprland per window layout
 
 The script maintains associative array `windows` that maps windows' addresses to selected layouts.
 
