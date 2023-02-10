@@ -1,28 +1,60 @@
 # Hyprland per window layout
 
-The script maintains associative array `windows` that maps windows' addresses to selected keyboard layouts.
+No configuration needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
 
-It's fork of [hyprland-per-window-layout](https://github.com/MahouShoujoMivutilde/hyprland-per-window-layout), with zero configuration and multi-keyboard support.
+Written in Rust. 
 
-## How to use it
+Note: it will not start, if you don't have at least 2 keyboard layouts in hyprland.conf
 
-Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
+## How to use
+
+### Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
+
+```bash 
+# e.g.
+yay -Sy && yay -S hyprland-per-window-layout
+```
 
 and
 
 Add this line to your hyprland.conf
 
 ```
-exec-once = /usr/bin/hyprland-per-window-xkblayout
+exec-once = /usr/bin/hyprland-per-window-layout
 ```
-
-## Requirements
-
-* [Hyprland](https://github.com/hyprwm/Hyprland)
-* bash 4.0+ (for associative arrays).
-* socat (for listening for Hyprland socket2 events).
-* [gojq](https://github.com/itchyny/gojq) (for working with `hyprctl`'s json. `jq` could work, but it is much slower).
 
 -----
 
-Tested and works on Hyprland v0.21.0beta.
+## Install without AUR
+
+Install from source with **rustup**:
+
+```bash
+
+git clone https://github.com/coffebar/hyprland-per-window-layout.git
+cd hyprland-per-window-layout
+
+rustup override set stable
+rustup update stable
+
+cargo build --release
+
+mkdir -p ~/.local/bin/
+cp target/release/hyprland-per-window-layout ~/.local/bin/
+
+```
+Add this line to your hyprland.conf
+
+```
+exec-once = ~/.local/bin/hyprland-per-window-layout
+```
+
+-----
+
+## Contribution
+
+Bug reports and PR are welcome. Thank you for your interest!
+
+-----
+
+Tested on Hyprland v0.21.0beta.
