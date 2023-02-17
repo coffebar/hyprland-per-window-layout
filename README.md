@@ -32,7 +32,11 @@ exec-once = /usr/bin/hyprland-per-window-layout
 cargo install hyprland-per-window-layout
 ```
 
-Make sure you have `$HOME/.cargo/bin` in your *PATH* env variable.
+Add this line to your hyprland.conf
+
+```
+exec-once = ~/.cargo/bin/hyprland-per-window-layout
+```
 
 
 ## Install from source
