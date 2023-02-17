@@ -1,11 +1,10 @@
 [package]
 name = "hyprland-per-window-layout"
 description = "Per window keyboard layout (language) for Hyprland wayland compositor"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-exclude = [
-	"README.md"
-]
+exclude = ["target", "Cargo.lock"]
+readme = "README.md"
 repository = "https://github.com/coffebar/hyprland-per-window-layout"
 keywords = ["cli", "wayland", "linux", "hyprland", "daemon"]
 license="MIT"
