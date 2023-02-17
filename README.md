@@ -25,7 +25,17 @@ exec-once = /usr/bin/hyprland-per-window-layout
 
 -----
 
-## Install without AUR
+
+## Install from cargo crates
+
+```bash
+cargo install hyprland-per-window-layout
+```
+
+Make sure you have `$HOME/.cargo/bin` in your *PATH* env variable.
+
+
+## Install from source
 
 Install from source with **rustup**:
 
