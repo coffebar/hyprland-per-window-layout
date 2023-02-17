@@ -7,7 +7,7 @@ exclude = [
 	"README.md"
 ]
 repository = "https://github.com/coffebar/hyprland-per-window-layout"
-keywords = ["cli", "wayland", "linux", "hyprland", "daemon", "tiling"]
+keywords = ["cli", "wayland", "linux", "hyprland", "daemon"]
 license="MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
