@@ -1,6 +1,12 @@
 # Hyprland per window layout
 
-No configuration needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
+![](https://img.shields.io/crates/d/hyprland-per-window-layout)
+![](https://img.shields.io/github/issues-raw/coffebar/hyprland-per-window-layout)
+![](https://img.shields.io/github/stars/coffebar/hyprland-per-window-layout)
+![](https://img.shields.io/aur/version/hyprland-per-window-layout)
+![](https://img.shields.io/crates/v/hyprland-per-window-layout)
+
+#### No configuration needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
 
 Written in Rust. 
 
