@@ -6,11 +6,11 @@
 ![](https://img.shields.io/aur/version/hyprland-per-window-layout)
 ![](https://img.shields.io/crates/v/hyprland-per-window-layout)
 
-#### No configuration needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
+#### No configuration is needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
 
-Written in Rust. 
+Written in Rust.
 
-Note: it will not start, if you don't have at least 2 keyboard layouts in hyprland.conf
+Note: it will not start if you don't have at least 2 keyboard layouts in hyprland.conf
 
 ## How to use
 
