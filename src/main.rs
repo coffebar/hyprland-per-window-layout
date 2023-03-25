@@ -6,6 +6,9 @@ use std::os::unix::net::UnixStream;
 mod hyprland_event; // work with message from socket
 use hyprland_event::{event, fullfill_layouts_list, hyprctl};
 
+mod single; // a struct representing one running instance
+use single::SingleInstance;
+
 use env_logger; // debug output with env RUST_LOG='debug'
 use log;
 
@@ -87,6 +90,11 @@ fn get_default_layout_name() {
 fn main() {
     // to see logs in output: add env RUST_LOG='debug'
     env_logger::init();
+    let instance_sock = SingleInstance::new("hyprland-per-window-layout").unwrap();
+    if !instance_sock.is_single() {
+        println!("Another instance is running.");
+        std::process::exit(1);
+    }
     // this program make sense if you have 2+ layouts
     let layouts_found = get_kb_layouts_count();
 
