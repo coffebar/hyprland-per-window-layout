@@ -14,7 +14,7 @@ Note: it will not start if you don't have at least 2 keyboard layouts in hyprlan
 
 ## How to use
 
-### Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
+## Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
 
 ```bash 
 # e.g.
