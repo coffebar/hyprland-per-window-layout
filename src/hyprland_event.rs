@@ -148,6 +148,11 @@ fn change_layout(index: u16) {
     let mut kb_index = 0;
     let mut trash: Vec<usize> = Vec::new();
     for kb in keyboards.iter() {
+        if kb.contains("yubikey") {
+            // skip yubikey
+            kb_index += 1;
+            continue;
+        }
         let new_index = &index.to_string();
         let e = hyprctl(["switchxkblayout", kb, new_index].to_vec());
         match e {
