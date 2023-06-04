@@ -60,6 +60,24 @@ fn get_kb_layouts_count() -> u16 {
     }
 }
 
+// check kb_file option is set in hyprland conf file
+fn kb_file_isset() -> bool {
+    // get layouts list from hyprctl cli call
+    match hyprctl(["getoption", "input:kb_file", "-j"].to_vec()) {
+        Ok(output) => {
+            log::debug!("input:kb_file: {}", output);
+            // parse the string from stdin into serde_json::Value
+            let json: Value = serde_json::from_str(&output).unwrap();
+            let value = str::replace(&json["str"].to_string().trim(), "\"", "");
+            value != "[[EMPTY]]"
+        }
+        Err(_e) => {
+            println!("Failed to get option from hyprctl");
+            false
+        }
+    }
+}
+
 // get default layout from cli command "hyprctl devices -j"
 // value of ['keyboards'][0]['active_keymap']
 fn get_default_layout_name() {
@@ -97,7 +115,7 @@ fn main() {
     // this program make sense if you have 2+ layouts
     let layouts_found = get_kb_layouts_count();
 
-    if layouts_found < 2 {
+    if layouts_found < 2 && !kb_file_isset() {
         println!("Fatal error: You need to configure layouts on Hyprland");
         println!("Add kb_layout option to input group in your hyprland.conf");
         println!("You don't need this program if you have only 1 keyboard layout");
