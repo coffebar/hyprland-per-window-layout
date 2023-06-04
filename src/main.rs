@@ -63,7 +63,6 @@ fn get_kb_layouts_count() -> u16 {
 // get default layout from cli command "hyprctl devices -j"
 // value of ['keyboards'][0]['active_keymap']
 fn get_default_layout_name() {
-    fullfill_layouts_list("English (US)".to_string());
     match hyprctl(["devices", "-j"].to_vec()) {
         Ok(output) => {
             log::debug!("input:kb_layout: {}", output);
