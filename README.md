@@ -77,4 +77,4 @@ Bug reports and PR are welcome. Thank you for your interest!
 
 -----
 
-Tested on Hyprland v0.26.
+Tested on Hyprland v0.29.
