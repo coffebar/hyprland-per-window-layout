@@ -181,6 +181,16 @@ pub fn fullfill_layouts_list(long_name: String) {
     // add kb long name to LAYOUTS if not there
     let mut found = false;
     let mut layout_vec = LAYOUTS.lock().unwrap();
+
+    // skip blacklisted layouts
+    let blacklisted_layouts = ["wvkbd"];
+    for layout in blacklisted_layouts.iter() {
+        if layout.eq(&long_name) {
+            log::debug!("Layout blacklisted: {}", long_name);
+            return;
+        }
+    }
+
     for layout in layout_vec.iter() {
         if layout.to_string().eq(&long_name) {
             found = true;
