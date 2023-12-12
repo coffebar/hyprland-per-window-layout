@@ -154,7 +154,7 @@ fn change_layout(index: u16) {
             continue;
         }
         let new_index = &index.to_string();
-        let e = hyprctl(["switchxkblayout", kb, new_index].to_vec());
+        let e = hyprctl(["switchxkblayout", "--", kb, new_index].to_vec());
         match e {
             Ok(code) => {
                 log::debug!(
