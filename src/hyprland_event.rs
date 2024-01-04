@@ -61,9 +61,13 @@ pub fn event(name: &str, data: &str) {
     }
 
     if name == "activelayout" {
-        let params: Vec<&str> = data.split(",").collect();
         // params ex: keychron-keychron-k2,English (US)
+        let params: Vec<&str> = data.split(",").collect();
         if params.len() == 2 {
+            if params[0].contains("wlr_virtual_keyboard_v") {
+                log::debug!("Skip virtual keyboard {}", params[0]);
+                return;
+            }
             log::debug!(
                 "Catch layout changed event on {} with {}",
                 params[0],
