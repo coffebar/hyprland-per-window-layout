@@ -41,7 +41,6 @@ pub fn event(name: &str, data: &str, options: &Options) {
                 .into_boxed_str(),
         );
         *ACTIVE_CLASS.lock().unwrap() = data.to_string();
-        println!("Active class: {}", data);
         return;
     }
 
