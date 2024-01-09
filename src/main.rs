@@ -4,7 +4,10 @@ use std::io::BufReader; // read unix socket
 use std::os::unix::net::UnixStream;
 
 mod hyprland_event; // work with message from socket
-use hyprland_event::{event, fullfill_layouts_list, hyprctl};
+use hyprland_event::{event, fullfill_keyboards_list, fullfill_layouts_list, hyprctl};
+
+mod options; // read options.toml
+use options::read_options;
 
 mod single; // a struct representing one running instance
 use single::SingleInstance;
@@ -24,6 +27,13 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
         }
     };
     let mut reader = BufReader::new(stream);
+    let opt = read_options();
+    if opt.keyboards.len() > 0 {
+        for keyboard in opt.keyboards.iter() {
+            fullfill_keyboards_list(keyboard.to_string());
+            log::debug!("Keyboard added: {}", keyboard);
+        }
+    }
     loop {
         // read message from socket
         let mut buf: Vec<u8> = vec![];
@@ -31,7 +41,7 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
         let data = String::from_utf8_lossy(&buf);
         let data_parts: Vec<&str> = data.trim().split(">>").collect();
         if data_parts.len() > 1 {
-            event(data_parts[0], data_parts[1])
+            event(data_parts[0], data_parts[1], &opt)
         }
     }
 }

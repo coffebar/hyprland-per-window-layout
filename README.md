@@ -31,6 +31,10 @@ Add this line to your hyprland.conf
 exec-once = /usr/bin/hyprland-per-window-layout
 ```
 
+## Configuration
+
+Optional, please read [configuration.md](configuration.md) for more details.
+
 -----
 
 

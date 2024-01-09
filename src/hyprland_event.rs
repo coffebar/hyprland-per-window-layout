@@ -1,6 +1,9 @@
 // logging
 use log;
 
+// options struct
+use crate::options::Options;
+
 // std lib
 use std::fmt;
 
@@ -20,13 +23,26 @@ lazy_static! {
     pub static ref KEYBOARDS: Mutex<Vec<&'static str>> =  Mutex::new(Vec::new());
     // last active window address
     static ref ACTIVE_WINDOW: Mutex<String> = Mutex::new(String::new());
+    // last active window class
+    static ref ACTIVE_CLASS: Mutex<String> = Mutex::new(String::new());
     // current active layout index
     static ref ACTIVE_LAYOUT: Mutex<u16> = Mutex::new(0);
 }
 
 // work with messages from hyprland socket
-pub fn event(name: &str, data: &str) {
+pub fn event(name: &str, data: &str, options: &Options) {
     log::debug!("E:'{}' D:'{}'", name, data);
+
+    if name == "activewindow" {
+        // save only all before first comma
+        let data: &str = Box::leak(
+            data.split(",").collect::<Vec<&str>>()[0]
+                .to_owned()
+                .into_boxed_str(),
+        );
+        *ACTIVE_CLASS.lock().unwrap() = data.to_string();
+        return;
+    }
 
     if name == "activewindowv2" {
         let addr_x = format!("0x{}", data);
@@ -42,6 +58,33 @@ pub fn event(name: &str, data: &str) {
             None => {
                 drop(map);
                 log::debug!("added addr: {}", addr);
+                // check if we have default layout for this window
+                let default_layouts = &options.default_layouts;
+
+                for (index, window_classes) in default_layouts.iter() {
+                    for window_class in window_classes.iter() {
+                        for window_active_class in ACTIVE_CLASS
+                            .lock()
+                            .unwrap()
+                            .split(",")
+                            .collect::<Vec<&str>>()
+                            .iter()
+                        {
+                            if window_active_class.eq(window_class) {
+                                log::debug!(
+                                    "Found default layout {} for window {}",
+                                    index,
+                                    window_active_class
+                                );
+                                let mut map = HASHMAP.lock().unwrap();
+                                map.insert(addr, *index);
+                                drop(map);
+                                change_layout(*index);
+                                return;
+                            }
+                        }
+                    }
+                }
                 // set layout to default one (index 0)
                 let mut map = HASHMAP.lock().unwrap();
                 map.insert(addr, 0);
@@ -74,13 +117,7 @@ pub fn event(name: &str, data: &str) {
                 params[1]
             );
             // add keyboard from params[0] to KEYBOARDS
-            let mut keyboards = KEYBOARDS.lock().unwrap();
-            if !keyboards.contains(&params[0]) {
-                let kb: &str = Box::leak(params[0].to_owned().into_boxed_str());
-                keyboards.push(kb);
-            }
-            drop(keyboards);
-
+            fullfill_keyboards_list(params[0].to_string());
             fullfill_layouts_list(params[1].to_string());
 
             // save layout from params[1] as index of the global layouts
@@ -206,4 +243,13 @@ pub fn fullfill_layouts_list(long_name: String) {
         layout_vec.push(lang);
         log::debug!("Layout stored: {}", long_name);
     }
+}
+
+pub fn fullfill_keyboards_list(name: String) {
+    let mut keyboards = KEYBOARDS.lock().unwrap();
+    if !keyboards.contains(&name.as_str()) {
+        let kb: &str = Box::leak(name.to_owned().into_boxed_str());
+        keyboards.push(kb);
+    }
+    drop(keyboards);
 }
