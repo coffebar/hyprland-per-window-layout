@@ -31,6 +31,14 @@ Add this line to your hyprland.conf
 exec-once = /usr/bin/hyprland-per-window-layout
 ```
 
+## Install on Gentoo
+
+Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayland-desktop#activate-overlay-via-eselect-repository), allow **~amd64** keyword and then install it:
+
+```bash
+# emerge --ask gui-apps/hyprland-per-window-layout
+```
+
 ## Configuration
 
 Optional, please read [configuration.md](configuration.md) for more details.
