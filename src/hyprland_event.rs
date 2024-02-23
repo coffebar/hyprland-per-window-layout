@@ -105,26 +105,24 @@ pub fn event(name: &str, data: &str, options: &Options) {
 
     if name == "activelayout" {
         // params ex: keychron-keychron-k2,English (US)
-        let params: Vec<&str> = data.split(",").collect();
-        if params.len() == 2 {
-            if params[0].contains("wlr_virtual_keyboard_v") {
-                log::debug!("Skip virtual keyboard {}", params[0]);
+        // params ex with variant: at-translated-set-2-keyboard,English (US, intl., with dead keys)
+        if let Some((param_keyboard, param_layout)) = data.split_once(',') {
+            if param_keyboard.contains("wlr_virtual_keyboard_v") {
+                log::debug!("Skip virtual keyboard {}", param_keyboard);
                 return;
             }
             log::debug!(
                 "Catch layout changed event on {} with {}",
-                params[0],
-                params[1]
+                param_keyboard,
+                param_layout
             );
-            // add keyboard from params[0] to KEYBOARDS
-            fullfill_keyboards_list(params[0].to_string());
-            fullfill_layouts_list(params[1].to_string());
+            fullfill_keyboards_list(param_keyboard.to_string());
+            fullfill_layouts_list(param_layout.to_string());
 
-            // save layout from params[1] as index of the global layouts
             let layout_vec = LAYOUTS.lock().unwrap();
             let mut index = 0;
             for layout in layout_vec.iter() {
-                if params[1].eq(&layout.to_string()) {
+                if param_layout.eq(&layout.to_string()) {
                     let active_layout: u16 = *ACTIVE_LAYOUT.lock().unwrap();
                     if active_layout == index {
                         log::debug!("Layout {} is current", layout);
@@ -150,7 +148,6 @@ pub fn event(name: &str, data: &str, options: &Options) {
         } else {
             log::warn!("Bad 'activelayout' format: {}", data)
         }
-        return;
     }
 }
 #[derive(Debug)]
