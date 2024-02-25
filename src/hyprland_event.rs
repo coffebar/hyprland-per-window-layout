@@ -141,9 +141,8 @@ pub fn event(name: &str, data: &str, options: &Options) {
                     );
 
                     return;
-                } else {
-                    index += 1;
                 }
+                index += 1;
             }
         } else {
             log::warn!("Bad 'activelayout' format: {}", data)
