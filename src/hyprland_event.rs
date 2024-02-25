@@ -163,13 +163,13 @@ pub fn hyprctl(argv: Vec<&str>) -> Result<String, CommandFailed> {
         .args(argv)
         .output()
         .expect("failed to execute process");
-    return match output.status.code() {
+    match output.status.code() {
         Some(code) => {
             log::debug!("Status code is {}", code);
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         }
         None => Err(CommandFailed {}),
-    };
+    }
 }
 
 // updates layout on all active keyboards
