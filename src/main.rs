@@ -37,7 +37,8 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
     loop {
         // read message from socket
         let mut buf: Vec<u8> = vec![];
-        reader.read_until(b'\n', &mut buf).unwrap();
+        let readed = reader.read_until(b'\n', &mut buf).unwrap();
+        if readed == 0 { break Ok(()); }
         let data = String::from_utf8_lossy(&buf);
         let data_parts: Vec<&str> = data.trim().split(">>").collect();
         if data_parts.len() > 1 {
