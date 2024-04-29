@@ -138,7 +138,17 @@ fn main() {
 
     match env::var("HYPRLAND_INSTANCE_SIGNATURE") {
         Ok(hypr_inst) => {
-            let socket = format!("/tmp/hypr/{}/.socket2.sock", hypr_inst);
+            let default_socket = format!("/tmp/hypr/{}/.socket2.sock", hypr_inst); // for backawards compatibility
+            let socket = match env::var("XDG_RUNTIME_DIR") {
+                Ok(runtime_dir) => match std::fs::metadata(format!(
+                    "{}/hypr/{}/.socket2.sock",
+                    runtime_dir, hypr_inst
+                )) {
+                    Ok(_) => format!("{}/hypr/{}/.socket2.sock", runtime_dir, hypr_inst),
+                    Err(..) => default_socket,
+                },
+                Err(..) => default_socket,
+            };
             // listen Hyprland socket
             match listen(socket) {
                 Ok(()) => {}
