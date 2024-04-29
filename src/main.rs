@@ -38,7 +38,9 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
         // read message from socket
         let mut buf: Vec<u8> = vec![];
         let readed = reader.read_until(b'\n', &mut buf).unwrap();
-        if readed == 0 { break Ok(()); }
+        if readed == 0 {
+            break Ok(());
+        }
         let data = String::from_utf8_lossy(&buf);
         let data_parts: Vec<&str> = data.trim().split(">>").collect();
         if data_parts.len() > 1 {
@@ -135,8 +137,8 @@ fn main() {
     get_default_layout_name();
 
     match env::var("HYPRLAND_INSTANCE_SIGNATURE") {
-        Ok(val) => {
-            let socket = format!("/tmp/hypr/{}/.socket2.sock", val);
+        Ok(hypr_inst) => {
+            let socket = format!("/tmp/hypr/{}/.socket2.sock", hypr_inst);
             // listen Hyprland socket
             match listen(socket) {
                 Ok(()) => {}
