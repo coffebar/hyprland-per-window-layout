@@ -128,6 +128,7 @@ pub fn event(name: &str, data: &str, options: &Options) {
                         log::debug!("Layout {} is current", layout);
                         return;
                     }
+                    *ACTIVE_LAYOUT.lock().unwrap() = index;
                     let addr_x = ACTIVE_WINDOW.lock().unwrap();
                     let addr: &str = Box::leak(addr_x.to_owned().into_boxed_str());
 
