@@ -90,4 +90,4 @@ Bug reports and PR are welcome. Thank you for your interest!
 
 -----
 
-Tested on Hyprland v0.34.
+Tested on Hyprland v0.41.
