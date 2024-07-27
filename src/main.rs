@@ -50,18 +50,22 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
 }
 
 // get keyboards count listed in hyprland conf file (input section)
-fn get_kb_layouts_count() -> u16 {
+// return -1 if failed
+fn get_kb_layouts_count() -> i16 {
     // get layouts list from hyprctl cli call
     match hyprctl(["getoption", "input:kb_layout", "-j"].to_vec()) {
         Ok(output) => {
             log::debug!("input:kb_layout: {}", output);
             // parse the string from stdin into serde_json::Value
-            let json: Value = serde_json::from_str(&output).unwrap();
+            let json: Value = serde_json::from_str(&output).unwrap_or(Value::Null);
+            if json.is_null() {
+                return -1;
+            }
             let kb_layout = str::replace(&json["str"].to_string().trim(), "\"", "");
 
             if kb_layout.len() > 0 {
                 let items: Vec<&str> = kb_layout.split(",").collect();
-                return items.len() as u16;
+                return items.len() as i16;
             } else {
                 0
             }
@@ -70,6 +74,22 @@ fn get_kb_layouts_count() -> u16 {
             println!("Failed to get option from hyprctl");
             0
         }
+    }
+}
+
+// try to get kb layouts count 5 times with 1 sec delay
+fn get_kb_layouts_count_retry() -> i16 {
+    let mut count = 0;
+    loop {
+        let layouts_found = get_kb_layouts_count();
+        if layouts_found > -1 {
+            return layouts_found;
+        }
+        count += 1;
+        if count > 5 {
+            return -1;
+        }
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }
 
@@ -126,7 +146,7 @@ fn main() {
         std::process::exit(1);
     }
     // this program make sense if you have 2+ layouts
-    let layouts_found = get_kb_layouts_count();
+    let layouts_found = get_kb_layouts_count_retry();
 
     if layouts_found < 2 && !kb_file_isset() {
         println!("Fatal error: You need to configure layouts on Hyprland");
