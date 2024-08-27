@@ -113,25 +113,30 @@ fn kb_file_isset() -> bool {
 
 // get default layout from cli command "hyprctl devices -j"
 // value of ['keyboards'][0]['active_keymap']
-fn get_default_layout_name() {
+fn get_default_layout_name() -> bool {
     match hyprctl(["devices", "-j"].to_vec()) {
         Ok(output) => {
-            log::debug!("input:kb_layout: {}", output);
             // parse the string from stdin into serde_json::Value
             let json: Value = serde_json::from_str(&output).unwrap();
-            let kb_layout = str::replace(
-                &json["keyboards"][0]["active_keymap"].to_string().trim(),
-                "\"",
-                "",
-            );
+            let keyboards = &json["keyboards"];
+            log::debug!("keyboards: {}", keyboards);
+            if keyboards.is_null() || keyboards.as_array().unwrap().len() < 1 {
+                log::warn!("No keyboards found");
+                return false;
+            }
+            let kb_layout =
+                str::replace(&keyboards[0]["active_keymap"].to_string().trim(), "\"", "");
             if kb_layout.len() > 0 {
                 fullfill_layouts_list(kb_layout.to_string());
+                return true;
             } else {
-                log::warn!("Keyboard layouts not found")
+                log::warn!("Keyboard layouts not found");
+                return false;
             }
         }
         Err(_e) => {
             println!("Failed to get devices from hyprctl");
+            return false;
         }
     }
 }
@@ -154,7 +159,10 @@ fn main() {
         println!("You don't need this program if you have only 1 keyboard layout");
         std::process::exit(1);
     }
-    get_default_layout_name();
+    while !get_default_layout_name() {
+        // repeat until success
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
 
     match env::var("HYPRLAND_INSTANCE_SIGNATURE") {
         Ok(hypr_inst) => {
