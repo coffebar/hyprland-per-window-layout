@@ -16,11 +16,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 lazy_static! {
     // hashmap to store windows and thier layouts
-    static ref HASHMAP: Mutex<HashMap<&'static str, u16>> = Mutex::new(HashMap::new());
+    static ref HASHMAP: Mutex<HashMap<String, u16>> = Mutex::new(HashMap::new());
     // vec to store layouts (long names)
-    pub static ref LAYOUTS: Mutex<Vec<&'static str>> =  Mutex::new(Vec::new());
+    pub static ref LAYOUTS: Mutex<Vec<String>> =  Mutex::new(Vec::new());
     // vec to store keyboard names
-    pub static ref KEYBOARDS: Mutex<Vec<&'static str>> =  Mutex::new(Vec::new());
+    pub static ref KEYBOARDS: Mutex<Vec<String>> =  Mutex::new(Vec::new());
     // last active window address
     static ref ACTIVE_WINDOW: Mutex<String> = Mutex::new(String::new());
     // last active window class
@@ -35,21 +35,23 @@ pub fn event(name: &str, data: &str, options: &Options) {
 
     if name == "activewindow" {
         // save only all before first comma
-        let data: &str = Box::leak(
-            data.split(",").collect::<Vec<&str>>()[0]
-                .to_owned()
-                .into_boxed_str(),
-        );
-        *ACTIVE_CLASS.lock().unwrap() = data.to_string();
+        let data = data.split(",").next().unwrap_or("").to_string();
+        if let Ok(mut active_class) = ACTIVE_CLASS.lock() {
+            *active_class = data;
+        }
         return;
     }
 
     if name == "activewindowv2" {
-        let addr_x = format!("0x{}", data);
-        let addr: &str = Box::leak(addr_x.into_boxed_str());
-        *ACTIVE_WINDOW.lock().unwrap() = addr.to_string();
-        let map = HASHMAP.lock().unwrap();
-        match map.get(addr) {
+        let addr = format!("0x{}", data);
+        if let Ok(mut active_window) = ACTIVE_WINDOW.lock() {
+            *active_window = addr.clone();
+        }
+        let map = match HASHMAP.lock() {
+            Ok(map) => map,
+            Err(_) => return,
+        };
+        match map.get(&addr) {
             Some(index) => {
                 log::debug!("{}: {}", addr, index);
                 // set layout to saved one
@@ -63,32 +65,32 @@ pub fn event(name: &str, data: &str, options: &Options) {
 
                 for (index, window_classes) in default_layouts.iter() {
                     for window_class in window_classes.iter() {
-                        for window_active_class in ACTIVE_CLASS
-                            .lock()
-                            .unwrap()
-                            .split(",")
-                            .collect::<Vec<&str>>()
-                            .iter()
-                        {
-                            if window_active_class.eq(window_class) {
-                                log::debug!(
-                                    "Found default layout {} for window {}",
-                                    index,
-                                    window_active_class
-                                );
-                                let mut map = HASHMAP.lock().unwrap();
-                                map.insert(addr, *index);
-                                drop(map);
-                                change_layout(*index);
-                                return;
+                        if let Ok(active_class) = ACTIVE_CLASS.lock() {
+                            for window_active_class in active_class.split(",") {
+                                if window_active_class.eq(window_class) {
+                                    log::debug!(
+                                        "Found default layout {} for window {}",
+                                        index,
+                                        window_active_class
+                                    );
+                                    // Drop active_class before acquiring new mutex
+                                    std::mem::drop(active_class);
+                                    if let Ok(mut map) = HASHMAP.lock() {
+                                        map.insert(addr.clone(), *index);
+                                        // map will be dropped automatically
+                                    }
+                                    change_layout(*index);
+                                    return;
+                                }
                             }
                         }
                     }
                 }
                 // set layout to default one (index 0)
-                let mut map = HASHMAP.lock().unwrap();
-                map.insert(addr, 0);
-                drop(map);
+                if let Ok(mut map) = HASHMAP.lock() {
+                    map.insert(addr, 0);
+                    // map will be dropped automatically
+                }
                 change_layout(0);
             }
         }
@@ -96,10 +98,10 @@ pub fn event(name: &str, data: &str, options: &Options) {
     }
 
     if name == "closewindow" {
-        let addr_x = format!("0x{}", data);
-        let addr: &str = Box::leak(addr_x.into_boxed_str());
-        let mut map = HASHMAP.lock().unwrap();
-        map.remove(addr);
+        let addr = format!("0x{}", data);
+        if let Ok(mut map) = HASHMAP.lock() {
+            map.remove(&addr);
+        }
         return;
     }
 
@@ -119,27 +121,38 @@ pub fn event(name: &str, data: &str, options: &Options) {
             fullfill_keyboards_list(param_keyboard.to_string());
             fullfill_layouts_list(param_layout.to_string());
 
-            let layout_vec = LAYOUTS.lock().unwrap();
+            let layout_vec = match LAYOUTS.lock() {
+                Ok(vec) => vec,
+                Err(_) => return,
+            };
             let mut index = 0;
             for layout in layout_vec.iter() {
-                if param_layout.eq(&layout.to_string()) {
-                    let active_layout: u16 = *ACTIVE_LAYOUT.lock().unwrap();
+                if param_layout.eq(layout) {
+                    let active_layout: u16 = match ACTIVE_LAYOUT.lock() {
+                        Ok(layout) => *layout,
+                        Err(_) => return,
+                    };
                     if active_layout == index {
                         log::debug!("Layout {} is current", layout);
                         return;
                     }
-                    *ACTIVE_LAYOUT.lock().unwrap() = index;
-                    let addr_x = ACTIVE_WINDOW.lock().unwrap();
-                    let addr: &str = Box::leak(addr_x.to_owned().into_boxed_str());
+                    if let Ok(mut active_layout_ref) = ACTIVE_LAYOUT.lock() {
+                        *active_layout_ref = index;
+                    }
+                    let addr = match ACTIVE_WINDOW.lock() {
+                        Ok(window) => window.clone(),
+                        Err(_) => return,
+                    };
 
-                    let mut map = HASHMAP.lock().unwrap();
-                    map.insert(addr, index);
-                    log::debug!(
-                        "Saved layout {} with index {} on addr {}",
-                        layout,
-                        index,
-                        addr
-                    );
+                    if let Ok(mut map) = HASHMAP.lock() {
+                        map.insert(addr.clone(), index);
+                        log::debug!(
+                            "Saved layout {} with index {} on addr {}",
+                            layout,
+                            index,
+                            addr
+                        );
+                    }
 
                     return;
                 }
@@ -176,13 +189,18 @@ pub fn hyprctl(argv: Vec<&str>) -> Result<String, CommandFailed> {
 // updates layout on all active keyboards
 // Note: you need to manualy change layout on keyboard to add it into this list
 fn change_layout(index: u16) {
-    let mut keyboards = KEYBOARDS.lock().unwrap();
+    let mut keyboards = match KEYBOARDS.lock() {
+        Ok(kb) => kb,
+        Err(_) => return,
+    };
     if keyboards.len() == 0 {
         log::debug!("layout change interrupt: no keyboard added");
         return;
     }
     log::debug!("layout change {}", index);
-    *ACTIVE_LAYOUT.lock().unwrap() = index;
+    if let Ok(mut active_layout) = ACTIVE_LAYOUT.lock() {
+        *active_layout = index;
+    }
     let mut kb_index = 0;
     let mut trash: Vec<usize> = Vec::new();
     for kb in keyboards.iter() {
@@ -192,7 +210,7 @@ fn change_layout(index: u16) {
             continue;
         }
         let new_index = &index.to_string();
-        let e = hyprctl(["switchxkblayout", "--", kb, new_index].to_vec());
+        let e = hyprctl(["switchxkblayout", "--", kb.as_str(), new_index].to_vec());
         match e {
             Ok(code) => {
                 log::debug!(
@@ -209,16 +227,19 @@ fn change_layout(index: u16) {
         }
         kb_index += 1;
     }
-    for kb_index in trash {
-        keyboards.remove(kb_index);
+    // Remove elements in reverse order to avoid index misalignment
+    for kb_index in trash.iter().rev() {
+        keyboards.remove(*kb_index);
     }
 }
 
 // we have to fill this layouts list on go
 pub fn fullfill_layouts_list(long_name: String) {
     // add kb long name to LAYOUTS if not there
-    let mut found = false;
-    let mut layout_vec = LAYOUTS.lock().unwrap();
+    let mut layout_vec = match LAYOUTS.lock() {
+        Ok(vec) => vec,
+        Err(_) => return,
+    };
 
     // skip blacklisted layouts
     let blacklisted_layouts = ["wvkbd"];
@@ -229,24 +250,16 @@ pub fn fullfill_layouts_list(long_name: String) {
         }
     }
 
-    for layout in layout_vec.iter() {
-        if layout.to_string().eq(&long_name) {
-            found = true;
-            break;
-        }
-    }
-    if !found {
-        let lang: &str = Box::leak(long_name.to_owned().into_boxed_str());
-        layout_vec.push(lang);
+    if !layout_vec.contains(&long_name) {
+        layout_vec.push(long_name.clone());
         log::debug!("Layout stored: {}", long_name);
     }
 }
 
 pub fn fullfill_keyboards_list(name: String) {
-    let mut keyboards = KEYBOARDS.lock().unwrap();
-    if !keyboards.contains(&name.as_str()) {
-        let kb: &str = Box::leak(name.to_owned().into_boxed_str());
-        keyboards.push(kb);
+    if let Ok(mut keyboards) = KEYBOARDS.lock() {
+        if !keyboards.contains(&name) {
+            keyboards.push(name);
+        }
     }
-    drop(keyboards);
 }

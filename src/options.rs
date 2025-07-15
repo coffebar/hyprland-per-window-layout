@@ -26,28 +26,54 @@ pub fn read_options() -> Options {
     match File::open(&options_path) {
         Ok(_file) => {
             // read the file contents
-            let _t = std::fs::read_to_string(&options_path)
-                .unwrap()
-                .parse::<Table>()
-                .unwrap();
+            let file_content = match std::fs::read_to_string(&options_path) {
+                Ok(content) => content,
+                Err(e) => {
+                    println!("Error reading options.toml: {}", e);
+                    return Options {
+                        keyboards: Vec::new(),
+                        default_layouts: HashMap::new(),
+                    };
+                }
+            };
+            let _t = match file_content.parse::<Table>() {
+                Ok(table) => table,
+                Err(e) => {
+                    println!("Error parsing options.toml: {}", e);
+                    return Options {
+                        keyboards: Vec::new(),
+                        default_layouts: HashMap::new(),
+                    };
+                }
+            };
             let mut map = HashMap::new();
             let mut keyboards = Vec::new();
             if let Some(_default_layouts) = _t.get("default_layouts") {
-                for (key, value) in _default_layouts[0].as_table().unwrap().iter() {
-                    map.insert(
-                        key.parse::<u16>().unwrap(),
-                        value
-                            .as_array()
-                            .unwrap()
-                            .iter()
-                            .map(|x| x.as_str().unwrap().to_string())
-                            .collect::<Vec<String>>(),
-                    );
+                if let Some(default_layouts_array) = _default_layouts.as_array() {
+                    if let Some(first_layout) = default_layouts_array.get(0) {
+                        if let Some(layout_table) = first_layout.as_table() {
+                            for (key, value) in layout_table.iter() {
+                                if let Ok(key_num) = key.parse::<u16>() {
+                                    if let Some(value_array) = value.as_array() {
+                                        let layout_vec: Vec<String> = value_array
+                                            .iter()
+                                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                                            .collect();
+                                        map.insert(key_num, layout_vec);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if let Some(_keyboards) = _t.get("keyboards") {
-                for keyboard in _keyboards.as_array().unwrap().iter() {
-                    keyboards.push(keyboard.as_str().unwrap().to_string());
+                if let Some(keyboards_array) = _keyboards.as_array() {
+                    for keyboard in keyboards_array.iter() {
+                        if let Some(keyboard_str) = keyboard.as_str() {
+                            keyboards.push(keyboard_str.to_string());
+                        }
+                    }
                 }
             }
             return Options {

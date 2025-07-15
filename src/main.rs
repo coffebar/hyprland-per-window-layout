@@ -37,7 +37,13 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
     loop {
         // read message from socket
         let mut buf: Vec<u8> = vec![];
-        let readed = reader.read_until(b'\n', &mut buf).unwrap();
+        let readed = match reader.read_until(b'\n', &mut buf) {
+            Ok(size) => size,
+            Err(e) => {
+                log::warn!("Error reading from socket: {}", e);
+                break Err(e);
+            }
+        };
         if readed == 0 {
             break Ok(());
         }
@@ -57,8 +63,14 @@ fn get_kb_layouts_count() -> i16 {
         Ok(output) => {
             log::debug!("input:kb_layout: {}", output);
             // parse the string from stdin into serde_json::Value
-            let json: Value = serde_json::from_str(&output).unwrap_or(Value::Null);
-            if json.is_null() {
+            let json: Value = match serde_json::from_str(&output) {
+                Ok(json) => json,
+                Err(e) => {
+                    log::warn!("Failed to parse JSON: {}", e);
+                    return -1;
+                }
+            };
+            if json.is_null() || json["str"].is_null() {
                 return -1;
             }
             let kb_layout = str::replace(&json["str"].to_string().trim(), "\"", "");
@@ -100,7 +112,16 @@ fn kb_file_isset() -> bool {
         Ok(output) => {
             log::debug!("input:kb_file: {}", output);
             // parse the string from stdin into serde_json::Value
-            let json: Value = serde_json::from_str(&output).unwrap();
+            let json: Value = match serde_json::from_str(&output) {
+                Ok(json) => json,
+                Err(e) => {
+                    log::warn!("Failed to parse JSON: {}", e);
+                    return false;
+                }
+            };
+            if json["str"].is_null() {
+                return false;
+            }
             let value = str::replace(&json["str"].to_string().trim(), "\"", "");
             value != "[[EMPTY]]"
         }
@@ -117,15 +138,35 @@ fn get_default_layout_name() -> bool {
     match hyprctl(["devices", "-j"].to_vec()) {
         Ok(output) => {
             // parse the string from stdin into serde_json::Value
-            let json: Value = serde_json::from_str(&output).unwrap();
+            let json: Value = match serde_json::from_str(&output) {
+                Ok(json) => json,
+                Err(e) => {
+                    log::warn!("Failed to parse JSON: {}", e);
+                    return false;
+                }
+            };
             let keyboards = &json["keyboards"];
             log::debug!("keyboards: {}", keyboards);
-            if keyboards.is_null() || keyboards.as_array().unwrap().len() < 1 {
+            if keyboards.is_null() {
                 log::warn!("No keyboards found");
                 return false;
             }
-            let kb_layout =
-                str::replace(&keyboards[0]["active_keymap"].to_string().trim(), "\"", "");
+            let keyboards_array = match keyboards.as_array() {
+                Some(arr) => arr,
+                None => {
+                    log::warn!("Keyboards is not an array");
+                    return false;
+                }
+            };
+            if keyboards_array.len() < 1 {
+                log::warn!("No keyboards found");
+                return false;
+            }
+            let kb_layout = str::replace(
+                &keyboards_array[0]["active_keymap"].to_string().trim(),
+                "\"",
+                "",
+            );
             if kb_layout.len() > 0 {
                 fullfill_layouts_list(kb_layout.to_string());
                 return true;
@@ -159,8 +200,18 @@ fn main() {
         println!("You don't need this program if you have only 1 keyboard layout");
         std::process::exit(1);
     }
+    let mut attempts = 0;
+    const MAX_ATTEMPTS: u32 = 30; // 30 second timeout
     while !get_default_layout_name() {
         // repeat until success
+        attempts += 1;
+        if attempts >= MAX_ATTEMPTS {
+            println!(
+                "Timeout: Could not get default layout after {} seconds",
+                MAX_ATTEMPTS
+            );
+            std::process::exit(1);
+        }
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
