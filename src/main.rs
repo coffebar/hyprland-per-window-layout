@@ -12,9 +12,6 @@ use options::read_options;
 mod single; // a struct representing one running instance
 use single::SingleInstance;
 
-use env_logger; // debug output with env RUST_LOG='debug'
-use log;
-
 use serde_json::Value; // json parsed
 
 // listen Hyprland socket
@@ -28,7 +25,7 @@ fn listen(socket_addr: String) -> std::io::Result<()> {
     };
     let mut reader = BufReader::new(stream);
     let opt = read_options();
-    if opt.keyboards.len() > 0 {
+    if !opt.keyboards.is_empty() {
         for keyboard in opt.keyboards.iter() {
             fullfill_keyboards_list(keyboard.to_string());
             log::debug!("Keyboard added: {}", keyboard);
@@ -73,11 +70,11 @@ fn get_kb_layouts_count() -> i16 {
             if json.is_null() || json["str"].is_null() {
                 return -1;
             }
-            let kb_layout = str::replace(&json["str"].to_string().trim(), "\"", "");
+            let kb_layout = str::replace(json["str"].to_string().trim(), "\"", "");
 
-            if kb_layout.len() > 0 {
+            if !kb_layout.is_empty() {
                 let items: Vec<&str> = kb_layout.split(",").collect();
-                return items.len() as i16;
+                items.len() as i16
             } else {
                 0
             }
@@ -122,7 +119,7 @@ fn kb_file_isset() -> bool {
             if json["str"].is_null() {
                 return false;
             }
-            let value = str::replace(&json["str"].to_string().trim(), "\"", "");
+            let value = str::replace(json["str"].to_string().trim(), "\"", "");
             value != "[[EMPTY]]"
         }
         Err(_e) => {
@@ -158,26 +155,26 @@ fn get_default_layout_name() -> bool {
                     return false;
                 }
             };
-            if keyboards_array.len() < 1 {
+            if keyboards_array.is_empty() {
                 log::warn!("No keyboards found");
                 return false;
             }
             let kb_layout = str::replace(
-                &keyboards_array[0]["active_keymap"].to_string().trim(),
+                keyboards_array[0]["active_keymap"].to_string().trim(),
                 "\"",
                 "",
             );
-            if kb_layout.len() > 0 {
+            if !kb_layout.is_empty() {
                 fullfill_layouts_list(kb_layout.to_string());
-                return true;
+                true
             } else {
                 log::warn!("Keyboard layouts not found");
-                return false;
+                false
             }
         }
         Err(_e) => {
             println!("Failed to get devices from hyprctl");
-            return false;
+            false
         }
     }
 }
@@ -206,10 +203,7 @@ fn main() {
         // repeat until success
         attempts += 1;
         if attempts >= MAX_ATTEMPTS {
-            println!(
-                "Timeout: Could not get default layout after {} seconds",
-                MAX_ATTEMPTS
-            );
+            println!("Timeout: Could not get default layout after {MAX_ATTEMPTS} seconds");
             std::process::exit(1);
         }
         std::thread::sleep(std::time::Duration::from_secs(1));
@@ -217,15 +211,15 @@ fn main() {
 
     match env::var("HYPRLAND_INSTANCE_SIGNATURE") {
         Ok(hypr_inst) => {
-            let default_socket = format!("/tmp/hypr/{}/.socket2.sock", hypr_inst); // for backawards compatibility
+            let default_socket = format!("/tmp/hypr/{hypr_inst}/.socket2.sock"); // for backawards compatibility
             let socket = match env::var("XDG_RUNTIME_DIR") {
-                Ok(runtime_dir) => match std::fs::metadata(format!(
-                    "{}/hypr/{}/.socket2.sock",
-                    runtime_dir, hypr_inst
-                )) {
-                    Ok(_) => format!("{}/hypr/{}/.socket2.sock", runtime_dir, hypr_inst),
-                    Err(..) => default_socket,
-                },
+                Ok(runtime_dir) => {
+                    match std::fs::metadata(format!("{runtime_dir}/hypr/{hypr_inst}/.socket2.sock"))
+                    {
+                        Ok(_) => format!("{runtime_dir}/hypr/{hypr_inst}/.socket2.sock"),
+                        Err(..) => default_socket,
+                    }
+                }
                 Err(..) => default_socket,
             };
             // listen Hyprland socket

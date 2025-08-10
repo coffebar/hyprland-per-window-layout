@@ -1,5 +1,4 @@
 // logging
-use log;
 
 // options struct
 use crate::options::Options;
@@ -43,7 +42,7 @@ pub fn event(name: &str, data: &str, options: &Options) {
     }
 
     if name == "activewindowv2" {
-        let addr = format!("0x{}", data);
+        let addr = format!("0x{data}");
         if let Ok(mut active_window) = ACTIVE_WINDOW.lock() {
             *active_window = addr.clone();
         }
@@ -98,7 +97,7 @@ pub fn event(name: &str, data: &str, options: &Options) {
     }
 
     if name == "closewindow" {
-        let addr = format!("0x{}", data);
+        let addr = format!("0x{data}");
         if let Ok(mut map) = HASHMAP.lock() {
             map.remove(&addr);
         }
@@ -125,8 +124,8 @@ pub fn event(name: &str, data: &str, options: &Options) {
                 Ok(vec) => vec,
                 Err(_) => return,
             };
-            let mut index = 0;
-            for layout in layout_vec.iter() {
+            for (index, layout) in layout_vec.iter().enumerate() {
+                let index = index as u16;
                 if param_layout.eq(layout) {
                     let active_layout: u16 = match ACTIVE_LAYOUT.lock() {
                         Ok(layout) => *layout,
@@ -156,7 +155,6 @@ pub fn event(name: &str, data: &str, options: &Options) {
 
                     return;
                 }
-                index += 1;
             }
         } else {
             log::warn!("Bad 'activelayout' format: {}", data)
@@ -167,7 +165,7 @@ pub fn event(name: &str, data: &str, options: &Options) {
 pub struct CommandFailed {}
 impl fmt::Display for CommandFailed {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", "Command returned error")
+        write!(f, "Command returned error")
     }
 }
 
@@ -193,7 +191,7 @@ fn change_layout(index: u16) {
         Ok(kb) => kb,
         Err(_) => return,
     };
-    if keyboards.len() == 0 {
+    if keyboards.is_empty() {
         log::debug!("layout change interrupt: no keyboard added");
         return;
     }

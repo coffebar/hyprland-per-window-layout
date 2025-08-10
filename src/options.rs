@@ -29,7 +29,7 @@ pub fn read_options() -> Options {
             let file_content = match std::fs::read_to_string(&options_path) {
                 Ok(content) => content,
                 Err(e) => {
-                    println!("Error reading options.toml: {}", e);
+                    println!("Error reading options.toml: {e}");
                     return Options {
                         keyboards: Vec::new(),
                         default_layouts: HashMap::new(),
@@ -39,7 +39,7 @@ pub fn read_options() -> Options {
             let _t = match file_content.parse::<Table>() {
                 Ok(table) => table,
                 Err(e) => {
-                    println!("Error parsing options.toml: {}", e);
+                    println!("Error parsing options.toml: {e}");
                     return Options {
                         keyboards: Vec::new(),
                         default_layouts: HashMap::new(),
@@ -50,7 +50,7 @@ pub fn read_options() -> Options {
             let mut keyboards = Vec::new();
             if let Some(_default_layouts) = _t.get("default_layouts") {
                 if let Some(default_layouts_array) = _default_layouts.as_array() {
-                    if let Some(first_layout) = default_layouts_array.get(0) {
+                    if let Some(first_layout) = default_layouts_array.first() {
                         if let Some(layout_table) = first_layout.as_table() {
                             for (key, value) in layout_table.iter() {
                                 if let Ok(key_num) = key.parse::<u16>() {
@@ -85,8 +85,8 @@ pub fn read_options() -> Options {
             println!("options.toml not found, using defaults");
         }
     };
-    return Options {
+    Options {
         keyboards: Vec::new(),
         default_layouts: HashMap::new(),
-    };
+    }
 }
