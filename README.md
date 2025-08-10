@@ -1,6 +1,6 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://stand-with-ukraine.pp.ua)
 
-# Hyprland per window layout
+# Hyprland Per-Window Keyboard Layout Manager
 
 ![](https://img.shields.io/crates/d/hyprland-per-window-layout)
 ![](https://img.shields.io/github/issues-raw/coffebar/hyprland-per-window-layout)
@@ -8,49 +8,49 @@
 ![](https://img.shields.io/aur/version/hyprland-per-window-layout)
 ![](https://img.shields.io/crates/v/hyprland-per-window-layout)
 
-#### No configuration is needed, just add your layouts (if you didn't yet) to the input section of hyprland config file and start this program right after Hyprland.
+Automatic keyboard layout switching for Hyprland - each window remembers its own keyboard layout.
 
-Written in Rust.
+## Features
 
-Note: it will not start if you don't have at least 2 keyboard layouts in hyprland.conf
+- 🚀 **Zero configuration** - works out of the box
+- 🧠 **Per-window memory** - each window maintains its layout
+- ⚡ **Lightweight** - minimal resource usage (Rust)
+- 🔧 **Optional configuration** - set default layouts per application
 
-## How to use
+## Use Cases
 
-## Install **hyprland-per-window-layout** from [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout)
+- **Developers**: Code in English, chat in native language
+- **Multilingual users**: Seamless switching between languages
+- **Power users**: Consistent layouts across applications
+
+**Requirements**: At least 2 keyboard layouts in hyprland.conf
+
+## Installation
+
+### From [AUR](https://aur.archlinux.org/packages/hyprland-per-window-layout) (Arch Linux)
 
 ```bash 
 # e.g.
 yay -Sy && yay -S hyprland-per-window-layout
 ```
 
-and
-
-Add this line to your hyprland.conf
-
+Add to hyprland.conf:
 ```
 exec-once = /usr/bin/hyprland-per-window-layout
 ```
 
-## Configuration
-
-Optional, please read [configuration.md](configuration.md) for more details.
-
------
-
-
-## Install from cargo crates
+### From Cargo
 
 ```bash
 cargo install hyprland-per-window-layout
 ```
 
-Add this line to your hyprland.conf
-
+Add to hyprland.conf:
 ```
 exec-once = ~/.cargo/bin/hyprland-per-window-layout
 ```
 
-## Install on Gentoo
+### Gentoo
 
 Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayland-desktop#activate-overlay-via-eselect-repository), allow **~amd64** keyword and then install it:
 
@@ -58,36 +58,27 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 # emerge --ask gui-apps/hyprland-per-window-layout
 ```
 
-## Install from source
-
-Install from source with **rustup**:
+### From Source
 
 ```bash
-
 git clone https://github.com/coffebar/hyprland-per-window-layout.git
 cd hyprland-per-window-layout
-
-rustup override set stable
-rustup update stable
-
 cargo build --release
-
 mkdir -p ~/.local/bin/
 cp target/release/hyprland-per-window-layout ~/.local/bin/
-
 ```
-Add this line to your hyprland.conf
 
+Add to hyprland.conf:
 ```
 exec-once = ~/.local/bin/hyprland-per-window-layout
 ```
 
------
+## Configuration
 
-## Contribution
+Optional. See [configuration.md](configuration.md) for setting default layouts per application.
 
-Bug reports and PR are welcome. Thank you for your interest!
+## Contributing
 
------
+Bug reports and PRs are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-Tested on Hyprland v0.42.
+Tested on Hyprland v0.50.
