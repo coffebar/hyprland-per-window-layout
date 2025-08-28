@@ -42,6 +42,10 @@ pub fn event(name: &str, data: &str, options: &Options) {
     }
 
     if name == "activewindowv2" {
+        if data.is_empty() {
+            log::debug!("No active window (empty workspace), maintaining current layout");
+            return;
+        }
         let addr = format!("0x{data}");
         if let Ok(mut active_window) = ACTIVE_WINDOW.lock() {
             *active_window = addr.clone();
