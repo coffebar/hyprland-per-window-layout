@@ -57,8 +57,16 @@ pub fn event(name: &str, data: &str, options: &Options) {
         match map.get(&addr) {
             Some(index) => {
                 log::debug!("{}: {}", addr, index);
-                // set layout to saved one
-                change_layout(*index);
+                // only change layout if it's different from current
+                let current_layout = match ACTIVE_LAYOUT.lock() {
+                    Ok(layout) => *layout,
+                    Err(_) => return,
+                };
+                if current_layout != *index {
+                    change_layout(*index);
+                } else {
+                    log::debug!("Layout {} already active, skipping change", index);
+                }
             }
             None => {
                 drop(map);
@@ -82,7 +90,19 @@ pub fn event(name: &str, data: &str, options: &Options) {
                                         map.insert(addr.clone(), *index);
                                         // map will be dropped automatically
                                     }
-                                    change_layout(*index);
+                                    // only change layout if it's different from current
+                                    let current_layout = match ACTIVE_LAYOUT.lock() {
+                                        Ok(layout) => *layout,
+                                        Err(_) => return,
+                                    };
+                                    if current_layout != *index {
+                                        change_layout(*index);
+                                    } else {
+                                        log::debug!(
+                                            "Layout {} already active, skipping change",
+                                            index
+                                        );
+                                    }
                                     return;
                                 }
                             }
@@ -94,7 +114,16 @@ pub fn event(name: &str, data: &str, options: &Options) {
                     map.insert(addr, 0);
                     // map will be dropped automatically
                 }
-                change_layout(0);
+                // only change layout if it's different from current
+                let current_layout = match ACTIVE_LAYOUT.lock() {
+                    Ok(layout) => *layout,
+                    Err(_) => return,
+                };
+                if current_layout != 0 {
+                    change_layout(0);
+                } else {
+                    log::debug!("Layout 0 already active, skipping change");
+                }
             }
         }
         return;
